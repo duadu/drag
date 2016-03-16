@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>拖拽</title>
+<style type="text/css"> 
+	body, ul {
+		margin: 0;
+		padding: 0;
+	}
+	ul {
+		position: absolute;
+		width: 350px;
+	}
+	li {
+		list-style: none;
+		width: 100px;
+		height: 100px;
+		background: blue;
+		margin: 5px;
+		float: left;
+		display: inline-block;
+		font-size: 28px;
+		color: #fff;
+		text-align: center;
+		line-height: 100px;
+		cursor: move;
+	}
+	img {
+		width: 100px;
+		height: 100px;
+	}
+	li:hover {
+		box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.85);
+	}
+</style> 
+</head> 
+<body> 
+	<ul>
+		<li>1</li>
+		<li>2</li>
+		<li>3</li>
+		<li>4</li>
+		<li>5</li>
+		<li>6</li>
+
+		<li><img src="1.jpg" alt="" draggable='false' /></li>
+		<li><img src="1.jpg" alt="" draggable='false' /></li>
+		<li><img src="1.jpg" alt="" draggable='false' /></li>
+		<li><img src="1.jpg" alt="" draggable='false' /></li>
+		<li><img src="1.jpg" alt="" draggable='false' /></li>
+		<li><img src="1.jpg" alt="" draggable='false' /></li>
+	</ul>
+</body>
+<script type="text/javascript" src="jquery-1.8.3.min.js"></script> 
+<script type="text/javascript"> 
+$(function(){
+	var oLi = $('li');
+	console.log(oLi.eq(0).offset().left);
+	var disX = 0;
+	var disY = 0;
+	var moveX = 0;
+	var moveY = 0;
+	var minZIndex = 1;
+	var l = [];
+	var t = [];
+	for (var i = 0; i < oLi.length; i++) {
+		l[i] = oLi.eq(i).offset().left;
+		t[i] = oLi.eq(i).offset().top;
+		oLi.eq(i).css({
+			'left': l[i],
+			'top': t[i]
+		}).attr('index', i);
+	}
+	for (var i = 0; i < oLi.length; i++) {
+		oLi.eq(i).css({
+			'position': 'absolute',
+			'magin': 0
+		});
+		$('ul').css('margin', '5px');
+		setDrag(oLi.eq(i));
+	}
+	function setDrag (obj) {
+		// 当鼠标按下去的时候
+		obj.mousedown(function (e) {
+			$('ul').css('margin', '0');
+			obj.css({
+				'zIndex': minZIndex++
+			});
+			// 计算按下鼠标时与拖拽对象的距离
+			disX = e.pageX + obj.scrollLeft() - obj.offset().left;
+			disY = e.pageY + obj.scrollTop() - obj.offset().top;
+			console.log(disX);
+			var objLeft = obj.css('left');
+			var objTop = obj.css('top');
+			var anxiaL = e.pageX;
+			var anxiaT = e.pageY;
+			// 当鼠标放在元素对象上的时候
+			$(document).mousemove(function (e) {
+				// 计算当鼠标拖动时图片移动的位置
+				moveX = e.pageX + obj.scrollLeft() - disX;
+				moveY = e.pageY + obj.scrollTop() - disY;
+				console.log(moveX);
+				obj.css({
+					'left': moveX,
+					'top': moveY
+				});
+			});
+			// 当松开鼠标的时候
+			$(document).mouseup(function (e) {
+				$(document).off('mousemove'); // 移除mousemove事件
+				$(document).off('mouseup');
+				var oNear = findMin(obj);
+				if (oNear) {
+					// 交换图片位置   如：1和3换
+					moveStyle(oNear, objLeft, objTop);
+					moveStyle(obj, oNear.css('left'), oNear.css('top'));
+				}
+			});
+			// 移动样式
+			function moveStyle (obj, valL, valT) {
+				obj.animate({
+					left: valL,
+					top: valT
+				},200);
+			}
+		});
+		// 找最近的图片位置
+		function findMin (obj) {
+			var minDis = 9999999;
+			var minIndex;
+			for (var i = 0; i < oLi.length; i++) {
+				if (obj.index() == i) {   // 跳过该图片自己的位置
+					continue;
+				}
+				var dis = getDis(obj, oLi.eq(i));
+				if (dis < minDis) {
+					minDis = dis;
+					minIndex = i;
+				}
+			}
+			if (minIndex < 0) {
+				return null;
+			} else {
+				return oLi.eq(minIndex);
+			}
+		}
+		// 勾股定理计算距离
+		function getDis (obj1, obj2) {
+			var a = obj1.offset().left - obj2.offset().left;
+			var b = obj1.offset().top - obj2.offset().top;
+			// 拖动图片时与目标图片位置的距离， 完全覆盖的时候为0
+			return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+		}
+	}
+}); 
+</script> 
+</html> 
